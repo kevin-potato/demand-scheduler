@@ -32,6 +32,17 @@
       "startDate": "",
       "dueDate": "2026-07-21",
       "note": ""
+    },
+    {
+      "id": "mrtcwx4u4pkb",
+      "title": "AgentHub",
+      "stakeholder": "Kevin",
+      "requester": "Kevin",
+      "priority": "P0",
+      "status": "开发中",
+      "startDate": "",
+      "dueDate": "",
+      "note": "持续建设能力"
     }
   ]
 }

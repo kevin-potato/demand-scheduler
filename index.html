@@ -27,12 +27,15 @@
   .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
   .stat .num { font-size: 22px; font-weight: 600; }
   .stat .label { color: var(--text-sub); font-size: 12px; margin-top: 2px; }
+  .tabs { display: inline-flex; background: var(--gray-soft); border-radius: 9px; padding: 3px; gap: 2px; }
+  .tabs button { border: none; background: transparent; color: var(--text-sub); font-size: 13px; padding: 6px 16px; border-radius: 7px; cursor: pointer; }
+  .tabs button.active { background: var(--card); color: var(--text); font-weight: 500; box-shadow: 0 1px 2px rgba(16,24,40,.08); }
   .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
   .toolbar input[type=search], .toolbar select { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 13px; background: var(--card); color: var(--text); outline: none; }
   .toolbar input[type=search] { min-width: 200px; }
   .toolbar input:focus, .toolbar select:focus { border-color: var(--primary); }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
-  .card-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .card-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   .card-head h2 { font-size: 15px; font-weight: 600; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
@@ -46,12 +49,11 @@
   .tag.st-待排期 { background: var(--gray-soft); color: var(--text-sub); }
   .tag.st-已排期 { background: var(--purple-soft); color: var(--purple); }
   .tag.st-开发中 { background: var(--primary-soft); color: var(--primary); }
-  .tag.st-已上线 { background: var(--green-soft); color: var(--green); }
+  .tag.st-已完成 { background: var(--green-soft); color: var(--green); }
   .tag.st-已暂停 { background: var(--orange-soft); color: var(--orange); }
   .muted { color: var(--text-sub); font-size: 12px; }
   .empty { padding: 40px; text-align: center; color: var(--text-sub); }
   .overdue { color: var(--red); font-weight: 500; }
-  /* modal */
   .modal-mask { position: fixed; inset: 0; background: rgba(16,24,40,.45); display: none; align-items: flex-start; justify-content: center; padding: 60px 16px; z-index: 50; overflow-y: auto; }
   .modal-mask.show { display: flex; }
   .modal { background: var(--card); border-radius: 14px; width: 100%; max-width: 480px; padding: 22px; }
@@ -93,16 +95,23 @@
 
   <div class="card">
     <div class="card-head">
-      <h2>需求列表</h2>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <h2>需求列表</h2>
+        <div class="tabs" id="viewTabs">
+          <button data-view="active" class="active">进行中</button>
+          <button data-view="done">已完成</button>
+          <button data-view="all">全部</button>
+        </div>
+      </div>
       <button class="btn primary small admin-only" id="btnAddDemand">+ 新增需求</button>
     </div>
     <div style="padding:14px 18px 0;">
       <div class="toolbar">
-        <input type="search" id="fSearch" placeholder="搜索需求 / 提出人...">
+        <input type="search" id="fSearch" placeholder="搜索需求 / 业务方 / 提出人...">
         <select id="fStakeholder"><option value="">全部业务方</option></select>
         <select id="fStatus">
           <option value="">全部状态</option>
-          <option>待排期</option><option>已排期</option><option>开发中</option><option>已上线</option><option>已暂停</option>
+          <option>待排期</option><option>已排期</option><option>开发中</option><option>已完成</option><option>已暂停</option>
         </select>
         <select id="fPriority">
           <option value="">全部优先级</option><option>P0</option><option>P1</option><option>P2</option>
@@ -118,19 +127,6 @@
       </table>
     </div>
   </div>
-
-  <div class="card">
-    <div class="card-head">
-      <h2>业务方</h2>
-      <button class="btn primary small admin-only" id="btnAddStakeholder">+ 新增业务方</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>名称</th><th>对接人</th><th>需求数</th><th>备注</th><th class="admin-col">操作</th></tr></thead>
-        <tbody id="shBody"></tbody>
-      </table>
-    </div>
-  </div>
 </div>
 
 <!-- 需求编辑弹窗 -->
@@ -139,12 +135,12 @@
     <h3 id="demandModalTitle">新增需求</h3>
     <div class="field"><label>需求名称 *</label><input id="dTitle"></div>
     <div class="row2">
-      <div class="field"><label>业务方 *</label><select id="dStakeholder"></select></div>
+      <div class="field"><label>业务方 *</label><input id="dStakeholder" list="shList" placeholder="输入或选择历史业务方"><datalist id="shList"></datalist></div>
       <div class="field"><label>提出人</label><input id="dRequester"></div>
     </div>
     <div class="row2">
       <div class="field"><label>优先级</label><select id="dPriority"><option>P0</option><option selected>P1</option><option>P2</option></select></div>
-      <div class="field"><label>状态</label><select id="dStatus"><option>待排期</option><option>已排期</option><option>开发中</option><option>已上线</option><option>已暂停</option></select></div>
+      <div class="field"><label>状态</label><select id="dStatus"><option>待排期</option><option>已排期</option><option>开发中</option><option>已完成</option><option>已暂停</option></select></div>
     </div>
     <div class="row2">
       <div class="field"><label>开始日期</label><input type="date" id="dStart"></div>
@@ -154,20 +150,6 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeModal('demandModal')">取消</button>
       <button class="btn primary" id="btnSaveDemand">保存</button>
-    </div>
-  </div>
-</div>
-
-<!-- 业务方编辑弹窗 -->
-<div class="modal-mask" id="shModal">
-  <div class="modal">
-    <h3 id="shModalTitle">新增业务方</h3>
-    <div class="field"><label>名称 *</label><input id="sName"></div>
-    <div class="field"><label>对接人</label><input id="sContact"></div>
-    <div class="field"><label>备注</label><textarea id="sNote" rows="2"></textarea></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('shModal')">取消</button>
-      <button class="btn primary" id="btnSaveSh">保存</button>
     </div>
   </div>
 </div>

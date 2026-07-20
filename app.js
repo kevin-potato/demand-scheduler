@@ -120,7 +120,6 @@ function renderDemands() {
   const fSh = $('fStakeholder').value, fSt = $('fStatus').value, fP = $('fPriority').value;
   const today = new Date().toISOString().slice(0, 10);
   const order = { 'P0': 0, 'P1': 1, 'P2': 2 };
-  const stOrder = { '开发中': 0, '已排期': 1, '待排期': 2, '已暂停': 3, '已完成': 4 };
 
   let rows = DB.demands.filter(x => {
     if (VIEW === 'active' && x.status === '已完成') return false;
@@ -129,11 +128,8 @@ function renderDemands() {
       (!fSh || x.stakeholder === fSh) && (!fSt || x.status === fSt) && (!fP || x.priority === fP);
   });
 
-  if (VIEW === 'done') {
-    rows.sort((a, b) => (b.dueDate || '').localeCompare(a.dueDate || '') || (b.startDate || '').localeCompare(a.startDate || ''));
-  } else {
-    rows.sort((a, b) => (stOrder[a.status] ?? 9) - (stOrder[b.status] ?? 9) || (order[a.priority] ?? 9) - (order[b.priority] ?? 9) || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
-  }
+  // 排序：优先级（P0→P1→P2）优先，其次按截止时间从早到晚（无截止日期排最后）
+  rows.sort((a, b) => (order[a.priority] ?? 9) - (order[b.priority] ?? 9) || (a.dueDate || '9999').localeCompare(b.dueDate || '9999'));
 
   $('demandBody').innerHTML = rows.length ? rows.map(x => {
     const overdue = x.dueDate && x.dueDate < today && x.status !== '已完成';

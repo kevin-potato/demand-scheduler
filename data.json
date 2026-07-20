@@ -1,0 +1,30 @@
+{
+  "stakeholders": [
+    { "id": "s1", "name": "示例业务方A", "contact": "张三", "note": "示例数据，可在管理模式中修改或删除" },
+    { "id": "s2", "name": "示例业务方B", "contact": "李四", "note": "" }
+  ],
+  "demands": [
+    {
+      "id": "d1",
+      "title": "示例需求：销售日报看板",
+      "stakeholderId": "s1",
+      "requester": "张三",
+      "priority": "P1",
+      "status": "开发中",
+      "startDate": "2026-07-20",
+      "dueDate": "2026-07-31",
+      "note": "这是一条示例数据，进入管理模式后可编辑或删除"
+    },
+    {
+      "id": "d2",
+      "title": "示例需求：客户流失预警模型",
+      "stakeholderId": "s2",
+      "requester": "李四",
+      "priority": "P0",
+      "status": "待排期",
+      "startDate": "",
+      "dueDate": "",
+      "note": ""
+    }
+  ]
+}

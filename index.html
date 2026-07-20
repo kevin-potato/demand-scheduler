@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据需求排期</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1a2233; --text2: #5c667c;
+    --text-sub: #66707f; --border: #e4e7ec; --primary: #2563eb; --primary-soft: #eff4ff;
+    --green: #16a34a; --green-soft: #ecfdf3; --orange: #d97706; --orange-soft: #fffaeb;
+    --red: #dc2626; --red-soft: #fef3f2; --gray-soft: #f2f4f7; --purple: #7c3aed; --purple-soft: #f5f3ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  header h1 { font-size: 20px; font-weight: 600; }
+  header .sub { color: var(--text-sub); font-size: 12px; margin-top: 4px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .btn:hover { border-color: #c9cfd8; background: #fafbfc; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.primary:hover { background: #1d4fd7; }
+  .btn.danger { color: var(--red); border-color: #f4c7c3; }
+  .btn.small { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat .num { font-size: 22px; font-weight: 600; }
+  .stat .label { color: var(--text-sub); font-size: 12px; margin-top: 2px; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .toolbar input[type=search], .toolbar select { border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font-size: 13px; background: var(--card); color: var(--text); outline: none; }
+  .toolbar input[type=search] { min-width: 200px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--primary); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 24px; }
+  .card-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .card-head h2 { font-size: 15px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--text-sub); font-weight: 500; font-size: 12px; background: #fafbfc; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafbfd; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+  .tag.p0 { background: var(--red-soft); color: var(--red); }
+  .tag.p1 { background: var(--orange-soft); color: var(--orange); }
+  .tag.p2 { background: var(--gray-soft); color: var(--text-sub); }
+  .tag.st-待排期 { background: var(--gray-soft); color: var(--text-sub); }
+  .tag.st-已排期 { background: var(--purple-soft); color: var(--purple); }
+  .tag.st-开发中 { background: var(--primary-soft); color: var(--primary); }
+  .tag.st-已上线 { background: var(--green-soft); color: var(--green); }
+  .tag.st-已暂停 { background: var(--orange-soft); color: var(--orange); }
+  .muted { color: var(--text-sub); font-size: 12px; }
+  .empty { padding: 40px; text-align: center; color: var(--text-sub); }
+  .overdue { color: var(--red); font-weight: 500; }
+  /* modal */
+  .modal-mask { position: fixed; inset: 0; background: rgba(16,24,40,.45); display: none; align-items: flex-start; justify-content: center; padding: 60px 16px; z-index: 50; overflow-y: auto; }
+  .modal-mask.show { display: flex; }
+  .modal { background: var(--card); border-radius: 14px; width: 100%; max-width: 480px; padding: 22px; }
+  .modal h3 { font-size: 16px; margin-bottom: 16px; }
+  .field { margin-bottom: 13px; }
+  .field label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 5px; }
+  .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; outline: none; background: #fff; color: var(--text); }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #1a2233; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 99; max-width: 90%; }
+  .toast.show { opacity: 1; }
+  .admin-badge { display: none; background: var(--green-soft); color: var(--green); border-radius: 20px; padding: 3px 12px; font-size: 12px; }
+  body.admin .admin-badge { display: inline-block; }
+  .admin-only { display: none; }
+  body.admin .admin-only { display: inline-flex; }
+  body.admin th.admin-col, body.admin td.admin-col { display: table-cell; }
+  th.admin-col, td.admin-col { display: none; }
+  .hint { font-size: 12px; color: var(--text-sub); line-height: 1.6; background: var(--gray-soft); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+  .table-wrap { overflow-x: auto; }
+  @media (max-width: 640px) { .row2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>📊 数据需求排期</h1>
+      <div class="sub" id="updateTime"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span class="admin-badge">✓ 管理模式</span>
+      <button class="btn admin-only" id="btnLogout">退出管理</button>
+      <button class="btn" id="btnAdmin">管理模式</button>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>需求列表</h2>
+      <button class="btn primary small admin-only" id="btnAddDemand">+ 新增需求</button>
+    </div>
+    <div style="padding:14px 18px 0;">
+      <div class="toolbar">
+        <input type="search" id="fSearch" placeholder="搜索需求 / 提出人...">
+        <select id="fStakeholder"><option value="">全部业务方</option></select>
+        <select id="fStatus">
+          <option value="">全部状态</option>
+          <option>待排期</option><option>已排期</option><option>开发中</option><option>已上线</option><option>已暂停</option>
+        </select>
+        <select id="fPriority">
+          <option value="">全部优先级</option><option>P0</option><option>P1</option><option>P2</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>需求</th><th>业务方</th><th>提出人</th><th>优先级</th><th>状态</th><th>开始</th><th>截止</th><th>备注</th><th class="admin-col">操作</th>
+        </tr></thead>
+        <tbody id="demandBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>业务方</h2>
+      <button class="btn primary small admin-only" id="btnAddStakeholder">+ 新增业务方</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>名称</th><th>对接人</th><th>需求数</th><th>备注</th><th class="admin-col">操作</th></tr></thead>
+        <tbody id="shBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 需求编辑弹窗 -->
+<div class="modal-mask" id="demandModal">
+  <div class="modal">
+    <h3 id="demandModalTitle">新增需求</h3>
+    <div class="field"><label>需求名称 *</label><input id="dTitle"></div>
+    <div class="row2">
+      <div class="field"><label>业务方 *</label><select id="dStakeholder"></select></div>
+      <div class="field"><label>提出人</label><input id="dRequester"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>优先级</label><select id="dPriority"><option>P0</option><option selected>P1</option><option>P2</option></select></div>
+      <div class="field"><label>状态</label><select id="dStatus"><option>待排期</option><option>已排期</option><option>开发中</option><option>已上线</option><option>已暂停</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>开始日期</label><input type="date" id="dStart"></div>
+      <div class="field"><label>截止日期</label><input type="date" id="dDue"></div>
+    </div>
+    <div class="field"><label>备注</label><textarea id="dNote" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('demandModal')">取消</button>
+      <button class="btn primary" id="btnSaveDemand">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 业务方编辑弹窗 -->
+<div class="modal-mask" id="shModal">
+  <div class="modal">
+    <h3 id="shModalTitle">新增业务方</h3>
+    <div class="field"><label>名称 *</label><input id="sName"></div>
+    <div class="field"><label>对接人</label><input id="sContact"></div>
+    <div class="field"><label>备注</label><textarea id="sNote" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('shModal')">取消</button>
+      <button class="btn primary" id="btnSaveSh">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 管理模式登录弹窗 -->
+<div class="modal-mask" id="adminModal">
+  <div class="modal">
+    <h3>进入管理模式</h3>
+    <div class="hint">输入你的 GitHub 访问令牌（Token）后即可添加 / 修改 / 删除数据，改动会自动保存到线上。Token 只存在你自己的浏览器里，其他访问者只能查看。</div>
+    <div class="field"><label>GitHub Token</label><input id="adminToken" type="password" placeholder="github_pat_... 或 ghp_..."></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('adminModal')">取消</button>
+      <button class="btn primary" id="btnLogin">进入</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

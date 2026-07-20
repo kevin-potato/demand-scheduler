@@ -1,3 +1,15 @@
 {
-  "demands": []
+  "demands": [
+    {
+      "id": "mrtcpjpjibpe",
+      "title": "精装房项目效果验证数据监控",
+      "stakeholder": "郎玥",
+      "requester": "郎玥/羽信",
+      "priority": "P1",
+      "status": "已排期",
+      "startDate": "",
+      "dueDate": "2026-07-29",
+      "note": "需等待产品功能上线"
+    }
+  ]
 }

@@ -109,6 +109,17 @@
       "startDate": "",
       "dueDate": "2026-07-24",
       "note": ""
+    },
+    {
+      "id": "mru3i7kn26a2",
+      "title": "任务客群LTV值，预测续签率分析",
+      "stakeholder": "名远",
+      "requester": "名远",
+      "priority": "P0",
+      "status": "已排期",
+      "startDate": "",
+      "dueDate": "2026-07-21",
+      "note": ""
     }
   ]
 }
